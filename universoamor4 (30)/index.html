@@ -2634,5 +2634,107 @@ function animar(tiempo) {
         ctx.arc(lunaX, lunaY, planeta.tamaño * 0.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Brillo de la luna
-        const brilloLuna = ctx.createRadialG
+       // Brillo de la luna
+const brilloLuna = ctx.createRadialGradient(
+  lunaX - planeta.tamaño * 0.1, 
+  lunaY - planeta.tamaño * 0.1, 
+  0,
+  lunaX, 
+  lunaY, 
+  planeta.tamaño * 0.2
+);
+brilloLuna.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+brilloLuna.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+ctx.fillStyle = brilloLuna;
+ctx.beginPath();
+ctx.arc(lunaX, lunaY, planeta.tamaño * 0.2, 0, Math.PI * 2);
+ctx.fill();      // Dibujar partículas
+      variables.particulas.forEach((partícula, index) => {
+        partícula.x += partícula.velocidadX;
+        partícula.y += partícula.velocidadY;
+        partícula.vida -= partícula.desvanecimiento;
+
+        if (partícula.esCorazon) {
+          ctx.save();
+          ctx.translate(partícula.x, partícula.y);
+          ctx.rotate(partícula.rotacion);
+          ctx.fillStyle = partícula.color;
+          ctx.beginPath();
+          ctx.moveTo(0, -partícula.tamaño);
+          ctx.bezierCurveTo(
+            partícula.tamaño, -partícula.tamaño,
+            partícula.tamaño, partícula.tamaño,
+            0, partícula.tamaño
+          );
+          ctx.bezierCurveTo(
+            -partícula.tamaño, partícula.tamaño,
+            -partícula.tamaño, -partícula.tamaño,
+            0, -partícula.tamaño
+          );
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.fillStyle = partícula.color;
+          ctx.beginPath();
+          ctx.arc(partícula.x, partícula.y, partícula.tamaño, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (partícula.vida <= 0) {
+          variables.particulas.splice(index, 1);
+        }
+      });
+
+      // Resto de la implementación de efectos especiales...
+    });
+
+    // Actualizar efectos especiales
+    variables.efectosEspeciales.forEach((efecto, index) => {
+      efecto.tiempo += deltaTime;
+      if (efecto.tiempo > efecto.duracion) {
+        variables.efectosEspeciales.splice(index, 1);
+      }
+    });
+
+    // Dibujar estrellas fugaces
+    variables.estrellasFugaces.forEach((estrella, index) => {
+      if (performance.now() > estrella.tiempoInicio && !estrella.activa) {
+        estrella.activa = true;
+      }
+
+      if (estrella.activa) {
+        estrella.progreso += estrella.velocidad;
+        
+        ctx.strokeStyle = estrella.color;
+        ctx.lineWidth = estrella.grosor;
+        ctx.globalAlpha = estrella.brillo * (1 - estrella.progreso / estrella.longitud);
+        
+        ctx.beginPath();
+        ctx.moveTo(estrella.x, estrella.y);
+        ctx.lineTo(
+          estrella.x + Math.cos(estrella.ángulo) * estrella.progreso,
+          estrella.y + Math.sin(estrella.ángulo) * estrella.progreso
+        );
+        ctx.stroke();
+        
+        if (estrella.progreso > estrella.longitud) {
+          variables.estrellasFugaces.splice(index, 1);
+          variables.estrellasFugaces.push(crearEstrellaFugaz());
+        }
+      }
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Continuar el ciclo de animación
+    variables.animationFrameId = requestAnimationFrame(animar);
+  } catch (error) {
+    console.error("Error en animación:", error);
+    // Recuperación de error
+    if (variables.animationFrameId) {
+      cancelAnimationFrame(variables.animationFrameId);
+    }
+    inicializar();
+  }
+}
